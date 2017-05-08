@@ -30,6 +30,7 @@ public class DicomChecker extends JFrame implements ActionListener {
 	Color bgColor = new Color(0xc6d8f9);
 	JFileChooser chooser = null;
 	DicomObject dob = null;
+	File startingFile;
 
     public static void main(String args[]) {
 		Logger.getRootLogger().addAppender(
@@ -47,21 +48,22 @@ public class DicomChecker extends JFrame implements ActionListener {
 		
 		//Make a header panel
 		JPanel header = new JPanel();
+		header.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
 		header.setLayout(new BoxLayout(header, BoxLayout.X_AXIS));
 		header.setBackground(bgColor);
+		start = new JButton("Start");
+		start.addActionListener(this);
 		showDICOM = new JCheckBox("Show DICOM Files");
 		showDICOM.setSelected(false);
 		showDICOM.setBackground(bgColor);
 		showNonDICOM = new JCheckBox("Show Non-DICOM Files");
 		showNonDICOM.setSelected(true);
 		showNonDICOM.setBackground(bgColor);
-		start = new JButton("Start");
-		start.addActionListener(this);
+		header.add(start);
+		header.add(Box.createHorizontalGlue());
 		header.add(showDICOM);
 		header.add(Box.createHorizontalStrut(30));
 		header.add(showNonDICOM);
-		header.add(Box.createHorizontalGlue());
-		header.add(start);
 		mainPanel.add(header, BorderLayout.NORTH);
 
 		//Make a footer panel
@@ -89,10 +91,10 @@ public class DicomChecker extends JFrame implements ActionListener {
         pack();
         centerFrame();
         setVisible(true);
+        startingFile = getStartingFile();
 	}
 
 	public void actionPerformed(ActionEvent e) {
-        File startingFile = getStartingFile();
         if (startingFile != null) {
 			FileScanner fileScanner = new FileScanner(startingFile);
 			fileScanner.start();
@@ -135,8 +137,10 @@ public class DicomChecker extends JFrame implements ActionListener {
 				cp.println(sw.toString());
 			}
 			cp.println(Color.black, "\nDone.");
+			showPath(" ");
 		}
 		private void process(File file) {
+			showPath(file.getAbsolutePath());
 			if (file.isDirectory()) {
 				File[] files = file.listFiles();
 				for (File f : files) process(f);
@@ -151,11 +155,11 @@ public class DicomChecker extends JFrame implements ActionListener {
 				}				
 			}
 		}
-		private void showPath(File f) {
-			final File ff = f;
+		private void showPath(String path) {
+			final String fpath = path;
 			Runnable update = new Runnable() {
 				public void run() {
-					filepath.setText(ff.getAbsolutePath());
+					filepath.setText(fpath);
 				}
 			};
 			SwingUtilities.invokeLater(update);
