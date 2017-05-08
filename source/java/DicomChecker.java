@@ -140,7 +140,8 @@ public class DicomChecker extends JFrame implements ActionListener {
 			showPath(" ");
 		}
 		private void process(File file) {
-			showPath(file.getAbsolutePath());
+			String path = file.getAbsolutePath();
+			showPath(path);
 			if (file.isDirectory()) {
 				File[] files = file.listFiles();
 				for (File f : files) process(f);
@@ -148,10 +149,10 @@ public class DicomChecker extends JFrame implements ActionListener {
 			else {
 				try {
 					DicomObject dob = new DicomObject(file);
-					if(showDICOM.isSelected()) cp.println(Color.black, file.getAbsolutePath());
+					if (showDICOM.isSelected()) cp.println(Color.black, path);
 				}
 				catch (Exception ex) {
-					if(showNonDICOM.isSelected()) cp.println(Color.red, file.getAbsolutePath() + " - not DICOM");
+					if (showNonDICOM.isSelected()) cp.println(Color.red, path + " - not DICOM");
 				}				
 			}
 		}
