@@ -52,6 +52,7 @@ public class DicomChecker extends JFrame implements ActionListener {
 		header.setLayout(new BoxLayout(header, BoxLayout.X_AXIS));
 		header.setBackground(bgColor);
 		start = new JButton("Start");
+		start.setEnabled(false);
 		start.addActionListener(this);
 		showDICOM = new JCheckBox("Show DICOM Files");
 		showDICOM.setSelected(false);
@@ -92,6 +93,10 @@ public class DicomChecker extends JFrame implements ActionListener {
         centerFrame();
         setVisible(true);
         startingFile = getStartingFile();
+        if (startingFile != null) {
+			start.setEnabled(true);
+		}
+		else System.exit(0);
 	}
 
 	public void actionPerformed(ActionEvent e) {
