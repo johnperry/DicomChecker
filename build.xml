@@ -70,7 +70,7 @@
 	            	       CTP.jar"/>
 			</manifest>
 			<fileset dir="${build}" includes="${directory}/**"/>
-			<fileset dir="${resources}" includes="**"/>
+			<!--<fileset dir="${resources}" includes="**"/>-->
 		</jar>
 
       <copy overwrite="true" todir="${build}/${name}">

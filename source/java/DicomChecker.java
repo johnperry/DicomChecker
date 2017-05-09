@@ -29,10 +29,8 @@ public class DicomChecker extends JFrame implements ActionListener {
     JButton start;
     ColorPane cp;
 	Color bgColor = new Color(0xc6d8f9);
-	JFileChooser chooser = null;
-	DicomObject dob = null;
-	File startingFile;
-	PrintWriter pw = null;
+	JFileChooser inputChooser = null;
+	JFileChooser outputChooser = null;
 
     public static void main(String args[]) {
 		Logger.getRootLogger().addAppender(
@@ -54,7 +52,6 @@ public class DicomChecker extends JFrame implements ActionListener {
 		header.setLayout(new BoxLayout(header, BoxLayout.X_AXIS));
 		header.setBackground(bgColor);
 		start = new JButton("Start");
-		start.setEnabled(false);
 		start.addActionListener(this);
 		showDICOM = new JCheckBox("Show DICOM Files");
 		showDICOM.setSelected(false);
@@ -99,19 +96,10 @@ public class DicomChecker extends JFrame implements ActionListener {
         pack();
         centerFrame();
         setVisible(true);
-        startingFile = getStartingFile();
-        if (startingFile != null) {
-			start.setEnabled(true);
-		}
-		else System.exit(0);
 	}
 
 	public void actionPerformed(ActionEvent e) {
-        if (startingFile != null) {
-			FileScanner fileScanner = new FileScanner(startingFile);
-			fileScanner.start();
-		}
-		else System.exit(0);
+		new FileScanner().start();
 	}
 
     private void centerFrame() {
@@ -123,33 +111,45 @@ public class DicomChecker extends JFrame implements ActionListener {
     }
     
 	private File getStartingFile() {
-		File here = new File(System.getProperty("user.dir"));
-		chooser = new JFileChooser(here);
-		chooser.setDialogTitle("Select a DICOM image file or a directory");
-		chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-		chooser.setSelectedFile(here);
-		if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-			return chooser.getSelectedFile();
+		if (inputChooser == null) {
+			File here = new File(System.getProperty("user.dir"));
+			inputChooser = new JFileChooser(here);
+			inputChooser.setDialogTitle("Select a DICOM image file or a directory");
+			inputChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+			inputChooser.setSelectedFile(here);
+		}
+		if (inputChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+			return inputChooser.getSelectedFile();
 		}
 		else return null;
 	}
 	
 	private File getOutputFile() {
-		File here = new File(System.getProperty("user.dir"));
-		chooser = new JFileChooser(here);
-		chooser.setDialogTitle("Select a file for saving non-DICOM file paths");
-		chooser.setSelectedFile(new File(here, "Non-DICOM.txt"));
-		if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-			return chooser.getSelectedFile();
+		if (outputChooser == null) {
+			File here = new File(System.getProperty("user.dir"));
+			outputChooser = new JFileChooser(here);
+			outputChooser.setDialogTitle("Select a file for saving non-DICOM file paths");
+			outputChooser.setSelectedFile(new File(here, "Non-DICOM.txt"));
+		}
+		if (outputChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+			return outputChooser.getSelectedFile();
 		}
 		else return null;
 	}
 	
 	class FileScanner extends Thread {
 		File file;
-		public FileScanner(File file) {
+		int dicomCount;
+		int nonDicomCount;
+		DicomObject dob = null;
+		PrintWriter pw = null;
+		public FileScanner() {
 			super();
-			this.file = file;
+			cp.clear();
+			dicomCount = 0;
+			nonDicomCount = 0;
+			file = getStartingFile();
+			if (file == null) System.exit(0);
 			if (saveNonDICOM.isSelected()) {
 				File outputFile = getOutputFile();
 				if (outputFile != null) {
@@ -167,7 +167,10 @@ public class DicomChecker extends JFrame implements ActionListener {
 				ex.printStackTrace(new PrintWriter(sw));
 				cp.println(sw.toString());
 			}
-			cp.println(Color.black, "\nDone.");
+			cp.println(Color.black, " ");
+			cp.println(Color.black, dicomCount+" DICOM file"+((dicomCount!=1)?"s":"")+" found");
+			cp.println(Color.black, nonDicomCount+" non-DICOM file"+((nonDicomCount!=1)?"s":"")+" found");
+			cp.println(Color.black, "Done.");
 			showPath(" ");
 			if (pw != null) {
 				pw.flush();
@@ -185,9 +188,11 @@ public class DicomChecker extends JFrame implements ActionListener {
 			else {
 				try {
 					DicomObject dob = new DicomObject(file);
+					dicomCount++;
 					if (showDICOM.isSelected()) cp.println(Color.black, path);
 				}
 				catch (Exception ex) {
+					nonDicomCount++;
 					if (showNonDICOM.isSelected()) cp.println(Color.red, path + " - not DICOM");
 					if (pw != null) pw.println(path);
 				}				
