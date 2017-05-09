@@ -25,12 +25,14 @@ public class DicomChecker extends JFrame implements ActionListener {
     JLabel filepath;
     JCheckBox showDICOM;
     JCheckBox showNonDICOM;
+    JCheckBox saveNonDICOM;
     JButton start;
     ColorPane cp;
 	Color bgColor = new Color(0xc6d8f9);
 	JFileChooser chooser = null;
 	DicomObject dob = null;
 	File startingFile;
+	PrintWriter pw = null;
 
     public static void main(String args[]) {
 		Logger.getRootLogger().addAppender(
@@ -60,11 +62,16 @@ public class DicomChecker extends JFrame implements ActionListener {
 		showNonDICOM = new JCheckBox("Show Non-DICOM Files");
 		showNonDICOM.setSelected(true);
 		showNonDICOM.setBackground(bgColor);
+		saveNonDICOM = new JCheckBox("Save Non-DICOM Files");
+		saveNonDICOM.setSelected(false);
+		saveNonDICOM.setBackground(bgColor);
 		header.add(start);
 		header.add(Box.createHorizontalGlue());
 		header.add(showDICOM);
 		header.add(Box.createHorizontalStrut(30));
 		header.add(showNonDICOM);
+		header.add(Box.createHorizontalStrut(30));
+		header.add(saveNonDICOM);
 		mainPanel.add(header, BorderLayout.NORTH);
 
 		//Make a footer panel
@@ -127,14 +134,33 @@ public class DicomChecker extends JFrame implements ActionListener {
 		else return null;
 	}
 	
+	private File getOutputFile() {
+		File here = new File(System.getProperty("user.dir"));
+		chooser = new JFileChooser(here);
+		chooser.setDialogTitle("Select a file for saving non-DICOM file paths");
+		chooser.setSelectedFile(new File(here, "Non-DICOM.txt"));
+		if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+			return chooser.getSelectedFile();
+		}
+		else return null;
+	}
+	
 	class FileScanner extends Thread {
 		File file;
 		public FileScanner(File file) {
 			super();
 			this.file = file;
+			if (saveNonDICOM.isSelected()) {
+				File outputFile = getOutputFile();
+				if (outputFile != null) {
+					try { pw = new PrintWriter(outputFile); }
+					catch (Exception unable) { 
+						cp.println(Color.red, "Unable to create the output file");
+					}
+				}
+			}
 		}
 		public void run() {
-			cp.clear();
 			try { process(file); }
 			catch (Exception ex) {
 				StringWriter sw = new StringWriter();
@@ -143,13 +169,18 @@ public class DicomChecker extends JFrame implements ActionListener {
 			}
 			cp.println(Color.black, "\nDone.");
 			showPath(" ");
+			if (pw != null) {
+				pw.flush();
+				pw.close();
+			}
 		}
 		private void process(File file) {
 			String path = file.getAbsolutePath();
 			showPath(path);
 			if (file.isDirectory()) {
 				File[] files = file.listFiles();
-				for (File f : files) process(f);
+				if (files != null) for (File f : files) process(f);
+				else cp.println(Color.red, "\nUnable to process "+path+"\n");
 			}
 			else {
 				try {
@@ -158,6 +189,7 @@ public class DicomChecker extends JFrame implements ActionListener {
 				}
 				catch (Exception ex) {
 					if (showNonDICOM.isSelected()) cp.println(Color.red, path + " - not DICOM");
+					if (pw != null) pw.println(path);
 				}				
 			}
 		}
