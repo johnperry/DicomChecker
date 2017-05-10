@@ -179,7 +179,7 @@ public class DicomChecker extends JFrame implements ActionListener {
 		}
 		private void process(File file) {
 			String path = file.getAbsolutePath();
-			showPath(path);
+			showPath((dicomCount+nonDicomCount)+": "+path);
 			if (file.isDirectory()) {
 				File[] files = file.listFiles();
 				if (files != null) for (File f : files) process(f);
